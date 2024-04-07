@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@dotenvx/dotenvx": "^0.25.1",
+    "@dotenvx/dotenvx": "^0.30.0",
     "ejs": "latest",
     "express": "^4.19.2",
     "nodemon": "^3.1.0",
