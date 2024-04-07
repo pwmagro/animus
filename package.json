@@ -1,0 +1,19 @@
+{
+  "name": "animus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@dotenvx/dotenvx": "^0.25.1",
+    "ejs": "latest",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.0",
+    "request": "^2.88.2"
+  }
+}
