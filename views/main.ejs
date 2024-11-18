@@ -1,10 +1,131 @@
-<form action="javascript:getSequels(<%= key %>)" method="get">
-    <input type="text" name="key" id="key">
-    <input type="submit" value="Submit">
-</form>
+<!DOCTYPE html>
+<html>
+<body>
+hi<br>
+    <div id="getSequelsForm" hidden>
+        <form action="javascript:getSequels()" method="get">
+            <input type="text" id="aniusr" value="YourUsername">
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    <div id="loginForm" hidden>
+        <p>Please login here: <br></p>
+        <a href='https://anilist.co/api/v2/oauth/authorize?client_id=17992&response_type=token'>Login with AniList</a>
+    </div>
+    <div id="sequelList">
+    </div>
+</body>
 
+<script>
+    let hash = window.location.hash.replace("#","").split("&");
+    let seqForm = window.document.getElementById("getSequelsForm");
+    let loginForm = window.document.getElementById("loginForm");
+    let hashParse = {};
+    if (hash.length > 0) {
+        hash.forEach(element => {
+            let keyval = element.split("=");
+            hashParse[keyval[0]] = keyval[1];
+        });
+        console.log(hashParse);
+        if (hashParse.access_token) {
+            seqForm.hidden = false;
+            loginForm.hidden = true;
+        }
+        else {
+            seqForm.hidden = true;
+            loginForm.hidden = false;
+        }
+    }
+    
+function getSequels() {
+    // get the user's list
+    var query = `
+    query {
+        MediaListCollection (userName: "${aniusr.value}", type: ANIME, sort: SCORE, status_not: DROPPED) {
+            lists {
+                entries {
+                    mediaId
+                    media {
+                        relations {
+                            edges {
+                                relationType
+                                node {
+                                    id
+                                    title {
+                                        userPreferred
+                                    }
+                                    siteUrl
+                                }
+                            }
+                        }
+                    }
+                    status
+                }
+            }
+        }
+    }
+    `;
 
+    let id = 15125;
 
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("POST", "https://graphql.anilist.co", false ); // false for synchronous request
+    xmlHttp.setRequestHeader("Authorization", "Bearer " + hashParse.access_token);
+    xmlHttp.setRequestHeader("Content-Type",  "application/json");
+    xmlHttp.setRequestHeader("Accept",        "application/json");
 
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<%= key %>
+    xmlHttp.onreadystatechange = () => {
+        if (xmlHttp.readyState === XMLHttpRequest.DONE && xmlHttp.status === 200) {
+            console.log("nice");
+            console.log(xmlHttp.responseText);
+
+            let sequels = []
+            idObjs = JSON.parse(xmlHttp.responseText);
+            lists = idObjs.data.MediaListCollection.lists;
+            entries = []
+            lists.forEach((list) => {
+                entries.push(list.entries);
+            })
+            console.log(entries);
+            entries = entries.flat();
+            console.log(entries);
+            ids = []
+            entries.forEach((entry) => {
+                ids.push(entry.mediaId);
+                relations = entry.media.relations.edges
+                relations.forEach((relation) => {
+                    if (relation.relationType === "SEQUEL") {
+                        sequels.push(relation.node);
+                    }
+                })
+            })
+            console.log(sequels);
+            let sequelList = window.document.getElementById("sequelList");
+            
+            let unwatchedSequels = {}
+            sequels.forEach((sequel) => {
+                if (ids.includes(sequel.id)) {
+                    ;
+                }
+                else {
+                    unwatchedSequels[sequel.title.userPreferred] = sequel.siteUrl;
+                }
+            })
+            uris = []
+            for (var title in unwatchedSequels) {
+                uri = unwatchedSequels[title];
+                uris.push("<a href='" + uri + "'>" + title + "</a>");
+            }
+            sequelList.innerHTML = uris.join("<br>");
+        }
+        else {
+            console.log(xmlHttp.readyState);
+            console.log(xmlHttp.status);
+        }
+    }
+
+    req = {query: query, variables: {id: id}};
+    xmlHttp.send(JSON.stringify(req));
+}
+</script>
+</html>
